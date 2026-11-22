@@ -1,0 +1,16 @@
+{
+  "batch_frac": null,
+  "bound": 1.0,
+  "c1": 1.5,
+  "c2": 1.5,
+  "d": 10,
+  "init_std": 0.03,
+  "lam": 0.01,
+  "max_evals": 2000,
+  "n_particles": 20,
+  "resample_every": 10,
+  "seed": 0,
+  "vmax_frac": 0.05,
+  "w_end": 0.4,
+  "w_start": 0.9
+}

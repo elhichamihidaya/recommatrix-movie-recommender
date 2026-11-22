@@ -1,0 +1,5 @@
+{
+  "EVAL_BUDGET_TUNING": 2000,
+  "EVAL_BUDGET_FINAL": 6000,
+  "note": "Calibrated based on Numba fitness throughput of ~0.65 ms/eval on ML-1M"
+}

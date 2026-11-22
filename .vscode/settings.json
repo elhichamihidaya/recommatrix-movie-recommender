@@ -1,0 +1,7 @@
+{
+    "python.defaultInterpreterPath": "C:\\miniforge3\\envs\\optimisation_env\\python.exe",
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "python.envFile": "${workspaceFolder}/.env"
+}
