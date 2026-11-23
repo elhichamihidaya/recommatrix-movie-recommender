@@ -59,6 +59,15 @@ def main():
 
     for seed in SEEDS:
         print(f"\n>>> PROCESSING SEED {seed} <<<")
+        pso_key = ("pso", seed)
+        hybrid_key = ("pso+als", seed)
+
+        # A completed hybrid already has both its final metrics and saved
+        # factors. Skip it before loading a PSO model without its in-memory
+        # convergence history; otherwise history_df() would see empty frames.
+        if hybrid_key in existing_meta:
+            print(f"[Seed {seed}] PSO + ALS already present in results CSV, skipping.")
+            continue
 
         # 1. Fit PSO
         pso_cfg = PSOConfig(**pso_best)
@@ -66,7 +75,6 @@ def main():
         pso_cfg.max_evals = budget_final
 
         pso_model = PSORecommender(pso_cfg)
-        pso_key = ("pso", seed)
 
         if pso_key not in existing_meta:
             print(f"Fitting PSO on train_full (seed {seed})...")
@@ -108,10 +116,11 @@ def main():
 
         # Save factors and history of PSO
         np.savez(models_dir / f"pso_d10_seed{seed}.npz", U=pso_model.U, V=pso_model.V, mu=pso_model.mu)
-        pso_model.history_df().to_csv(conv_dir / f"pso_seed{seed}.csv", index=False)
+        pso_history_path = conv_dir / f"pso_seed{seed}.csv"
+        if pso_model.history:
+            pso_model.history_df().to_csv(pso_history_path, index=False)
 
         # 2. Refine with Hybrid (PSO -> ALS 10 iterations)
-        hybrid_key = ("pso+als", seed)
         refiner = ALSReference(d=10, lam=als_best["lam"], n_iter=10, seed=seed)
         hybrid_model = HybridRecommender(meta=pso_model, refiner=refiner)
 

@@ -13,7 +13,7 @@ import psutil
 # Experiment constants
 RATING_MIN: float = 1.0
 RATING_MAX: float = 5.0
-SEEDS: tuple[int, ...] = (0, 1, 2)
+SEEDS: tuple[int, ...] = (0, 1, 2, 3, 4)
 D_MAIN: int = 10
 SPLIT_SEED: int = 42
 

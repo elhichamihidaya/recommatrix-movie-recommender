@@ -5,6 +5,10 @@
 
 Ce projet étudie l'optimisation des facteurs latents d'un système de recommandation par métaheuristique (Particle Swarm Optimization - PSO) et son hybridation avec l'algorithme des Moindres Carrés Alternés (Alternating Least Squares - ALS), en alternative ou complément aux approches par descente de gradient (SGD) ou factorisation matricielle classique.
 
+## Jeu de données MovieLens 1M
+
+Téléchargez l’archive officielle [MovieLens 1M sur GroupLens](https://grouplens.org/datasets/movielens/1m/) et décompressez le dossier `ml-1m` dans `data/`. Le fichier attendu est `data/ml-1m/ratings.dat`. Le benchmark utilise `ratings.dat`; `users.dat` et `movies.dat` sont aussi fournis dans l’archive. Le dossier `data/` n’est pas stocké sur GitHub : chaque personne qui exécute le projet doit télécharger les données et suivre les conditions indiquées par GroupLens.
+
 ---
 
 ## 1. Formulation Mathématique & Fonctionnement
@@ -58,27 +62,30 @@ L'hybridation applique le principe d'optimisation en deux temps :
 
 ---
 
-## 3. Résultats Détaillés du Benchmark
+## 3. Résultats du Benchmark MovieLens 1M
 
-Les évaluations sont menées sur le jeu de test indépendant ($200\,016$ évaluations) à travers 3 graines aléatoires déterministes (`SEEDS = (0, 1, 2)`).
+Les expériences finales utilisent le split déterministe (seed 42), entraînent les modèles sur `train_full`, puis évaluent sur le jeu de test indépendant (200 016 notes). Les résultats finaux couvrent cinq graines (0 à 4). Les métriques Precision@k et Recall@k considèrent comme pertinentes les notes de test ≥ 4 et excluent les films déjà vus dans l'entraînement.
 
-| Méthode | Graines | RMSE Test | MAE Test | Temps Ajustement (s) | Mémoire Crête (MB) | Évaluations |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Moyenne Globale (Baseline)** | - | 1.1159 | 0.9329 | < 0.01 | - | 0 |
-| **PSO (seul, accordé)** | 3 | $1.1159 \pm 0.0000$ | $0.9329 \pm 0.0000$ | $13.09 \pm 0.39$ | $102.3 \pm 30.7$ | 6 000 |
-| **PSO + ALS (Hybride H1)** | 3 | **$0.8610 \pm 0.0005$** | **$0.6758 \pm 0.0005$** | $16.71 \pm 0.60$ | $95.6 \pm 24.6$ | 6 000 |
-| *ALS référence (10 itér)* | 3 | $0.8604 \pm 0.0010$ | $0.6754 \pm 0.0009$ | $4.21 \pm 0.74$ | $97.0 \pm 14.3$ | 0 |
-| *ALS référence (30 itér)* | 3 | $0.8575 \pm 0.0002$ | $0.6728 \pm 0.0002$ | $11.72 \pm 1.93$ | $96.5 \pm 5.3$ | 0 |
+Les résultats complets par seed sont dans [`results/benchmark_all.csv`](results/benchmark_all.csv), le résumé moyenne ± écart-type dans [`results/benchmark_summary.md`](results/benchmark_summary.md), et le graphique dans [`results/figures/benchmark_comparison.png`](results/figures/benchmark_comparison.png).
 
----
+## 4. Analyse des résultats
 
-## 4. Analyse Critique & Enseignements
+- Le PSO seul reste proche de la moyenne globale pour la prédiction de notes (RMSE moyen **1.1159**) et obtient une Precision@10 de **0.0050**.
+- Le raffinement ALS améliore nettement le classement des recommandations : PSO + ALS atteint une Precision@10 de **0.0212** et un RMSE de **0.8609**.
+- ALS accordé obtient un RMSE moyen de **0.8582** et une Precision@10 de **0.0212**. Le PSO + ALS donne donc des résultats proches, mais n'améliore pas ALS seul sur ces mesures et ajoute le coût du PSO.
+- ALS de référence avec 30 itérations obtient le meilleur RMSE (**0.8576**), avec P@10 = **0.0209** et R@10 = **0.0101**. BPR obtient les meilleurs scores de classement (P@10 = **0.2194**, R@10 = **0.1362**).
 
-1. **La limite de la grande dimension ($D \approx 10^5$) pour les métaheuristiques pures :**  
-   L'algorithme PSO seul stagne autour d'un RMSE de $1.1159$, quasiment identique à la moyenne globale. En dimension $97\,460$, l'espace de recherche est bien trop vaste pour qu'un essaim de 20 particules trouve sans gradient les directions de descente efficaces. C'est un résultat scientifique honnête et représentatif.
-   
-2. **Puissance du raffinement local :**  
-   Dès que les facteurs trouvés par le PSO sont transmis à ALS, le RMSE chute spectaculairement de $1.1159$ à **$0.8610$** en 10 itérations.
-   
-3. **Gain de l'hybridation vs ALS seul :**  
-   L'ALS démarré d'une initialisation aléatoire gaussienne atteint $0.8604$ en 4.2 secondes, contre $0.8610$ en 16.7 secondes pour l'hybride. L'étape d'exploration par PSO ne procure donc pas d'avantage de précision par rapport à une initialisation aléatoire standard pour ALS, tout en ajoutant un coût computationnel modéré.
+Tous les résultats par méthode, y compris les baselines, sont disponibles dans le résumé global référencé ci-dessus.
+
+## Baselines et analyse coût/qualité
+
+- Hyperparamètres retenus après validation : [`results/B7_hyperparameters.md`](results/B7_hyperparameters.md).
+- Analyse B9 (complexités, temps/mémoire/cycles, Pareto et tests appariés) : [`results/B9_cost_quality_analysis.md`](results/B9_cost_quality_analysis.md).
+- Figures : `results/figures/B9_quality_vs_time.png`, `B9_quality_vs_memory.png`, `B9_quality_vs_cycles.png`, `B9_pareto_fronts.png`.
+- Notebook : [`notebooks/main.ipynb`](notebooks/main.ipynb).
+
+Régénérer les tableaux et l’analyse :
+```powershell
+python experiments/c_final_report.py
+python experiments/b_cost_quality.py
+```

@@ -18,8 +18,11 @@ Le projet utilise l'environnement Conda configuré **`optimisation_env`** :
 *(Alternative directe : exécuter les scripts directement avec `& "C:\miniforge3\envs\optimisation_env\python.exe"`).*
 
 ### 1.2. Données requises
-Le fichier de notes MovieLens 1M doit se trouver dans le dossier `data/` :
-- `data/ratings.dat` (1 000 209 évaluations, délimiteur `::`).
+1. Téléchargez l’archive officielle [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/) depuis GroupLens.
+2. Décompressez le dossier `ml-1m` dans `data/`.
+3. Vérifiez que `data/ml-1m/ratings.dat` existe (1 000 209 évaluations, séparées par `::`). Le chargeur accepte aussi `data/ratings.dat`.
+
+Le dossier `data/` est ignoré par Git et n’est pas fourni dans le dépôt. Chaque personne doit télécharger le dataset avant de lancer les scripts; le benchmark utilise `ratings.dat` (les fichiers `users.dat` et `movies.dat` accompagnent l’archive). Suivez les conditions indiquées par GroupLens.
 
 ---
 
@@ -30,7 +33,7 @@ Le fichier de notes MovieLens 1M doit se trouver dans le dossier `data/` :
 |---|---|
 | `src/data.py` | Chargement de MovieLens 1M (`load_movielens_1m`) et découpage vectorisé déterministe par utilisateur (`get_split`, graine 42). Garantit que chaque utilisateur a $\ge 1$ note dans `train`. |
 | `src/metrics.py` | Calcul de l'erreur quadratique moyenne (`rmse`) et de l'erreur absolue moyenne (`mae`). |
-| `src/protocol.py` | Constantes globales (`SEEDS = (0, 1, 2)`, $d = 10$), enregistrement strict des résultats (`append_result`) et mesure précise du temps et de la RAM crête (`measure`). |
+| `src/protocol.py` | Constantes globales (`SEEDS = (0, 1, 2, 3, 4)`, $d = 10$), enregistrement strict des résultats (`append_result`) et mesure précise du temps et de la RAM crête (`measure`). |
 | `src/base.py` | Classe abstraite `BaseRecommender` : interface unifiée pour tous les modèles (`fit`, `predict`, `score_all`, `recommend`). |
 
 ### Étape 2 — Métaheuristique PSO & Hybridation ALS
@@ -41,7 +44,7 @@ Le fichier de notes MovieLens 1M doit se trouver dans le dossier `data/` :
 | `src/als_reference.py` | Solveur ALS de référence alternant la résolution des moindres carrés exacts sur matrices creuses CSR/CSC. |
 | `src/hybrid.py` | Recommandeur hybride (`HybridRecommender`) qui explore d'abord l'espace avec le PSO, puis affine localement avec l'ALS. |
 | `experiments/a_tuning.py` | Réglage des hyperparamètres sur le jeu de validation ($\lambda_{\text{ALS}} = 0.05$, PSO `init_std = 0.03`). |
-| `experiments/a_final.py` | Entraînement final sur `train_full` et évaluation sur `test` pour 3 graines (0, 1, 2). Sauvegarde des facteurs `.npz`. |
+| `experiments/a_final.py` | Entraînement final sur `train_full` et évaluation sur `test` pour 5 graines (0, 1, 2, 3, 4). Sauvegarde des facteurs `.npz`. |
 | `experiments/a_plots.py` | Génération automatique des graphiques de convergence et du résumé Markdown `results/A_summary.md`. |
 | `notebooks/main.ipynb` | Notebook interactif complet prêt pour la démonstration. |
 
@@ -59,10 +62,12 @@ Le projet intègre ensuite les modèles comparatifs et les métriques de ranking
 
 ```mermaid
 flowchart TD
-    T["1. Tests Unitaires\npytest -q"] --> S1["2. Tuning sur Validation\npython experiments/a_tuning.py"]
-    S1 --> S2["3. Expériences Finales sur Test\npython experiments/a_final.py"]
-    S2 --> S3["4. Graphiques & Tableaux\npython experiments/a_plots.py"]
-    S3 --> N["5. Démonstration Notebook\nnotebooks/main.ipynb"]
+    T["1. Tests unitaires\npytest -q"] --> S1["2. Tuning Partie A\npython experiments/a_tuning.py"]
+    S1 --> S2["3. Expériences finales Partie A\npython experiments/a_final.py"]
+    S2 --> B1["4. Tuning Partie B\npython experiments/b_tuning.py"]
+    B1 --> B2["5. Baselines Partie B\npython experiments/b_final.py"]
+    B2 --> R["6. Benchmark et analyse\nc_final_report.py + b_cost_quality.py"]
+    R --> N["7. Démonstration Notebook\nnotebooks/main.ipynb"]
 ```
 
 ### Étape 1 : Valider tous les tests unitaires
@@ -92,26 +97,38 @@ python experiments/a_final.py
 ```
 - **Durée :** ~1 minute 40 secondes.
 - **Résultats produits :**
-  - Entraîne PSO et l'Hybride PSO+ALS sur `train_full` pour les 3 graines (0, 1, 2).
-  - Évalue sur le jeu de test et remplit [results/metaheuristics.csv](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/metaheuristics.csv).
-  - Sauvegarde les facteurs latents dans [results/models/](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/models/).
-  - Sauvegarde les historiques de convergence dans [results/convergence/](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/convergence/).
+  - Entraîne PSO et l'Hybride PSO+ALS sur `train_full` pour les 5 graines (0, 1, 2, 3, 4).
+  - Évalue sur le jeu de test et remplit [results/metaheuristics.csv](results/metaheuristics.csv).
+  - Sauvegarde les facteurs latents dans [results/models/](results/models/).
+  - Sauvegarde les historiques de convergence dans [results/convergence/](results/convergence/).
 
 ---
 
-### Étape 4 : Générer les visualisations et le tableau résumé
+### Étape 4 : Exécuter la Partie B — réglage et baselines
 ```powershell
-python experiments/a_plots.py
+python experiments/backfill_a_ranking.py
+python experiments/b_tuning.py
+python experiments/b_final.py
+python experiments/backfill_reference_ranking.py
 ```
-- **Durée :** ~3 secondes.
-- **Résultats produits :**
-  - Graphique de convergence : [results/figures/convergence_pso.png](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/figures/convergence_pso.png).
-  - Tableau synthétique de benchmark : [results/A_summary.md](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/A_summary.md).
+- `b_tuning.py` sélectionne les configurations ALS, SGD et BPR sur validation et écrit les configurations retenues dans `configs/`.
+- `b_final.py` évalue les baselines sur le test et enregistre les résultats dans `results/baselines.csv`.
+- Les scripts `backfill_*.py` complètent les métriques de ranking des résultats de la Partie A et des ALS de référence.
 
 ---
 
-### Étape 5 : Exécuter et présenter le Notebook Jupyter
-Le notebook interactif se trouve dans [notebooks/main.ipynb](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/notebooks/main.ipynb).
+### Étape 5 : Générer le benchmark global et l’analyse coût/qualité
+```powershell
+python experiments/c_final_report.py
+python experiments/b_cost_quality.py
+```
+- Le benchmark combine 11 méthodes et 5 graines, puis crée `results/benchmark_all.csv`, `results/benchmark_summary.csv`, `results/benchmark_summary.md` et `results/figures/benchmark_comparison.png`.
+- L’analyse B9 génère les tableaux de coût/qualité, les tests appariés et les figures sous `results/figures/`.
+
+---
+
+### Étape 6 : Exécuter et présenter le Notebook Jupyter
+Le notebook interactif se trouve dans [notebooks/main.ipynb](notebooks/main.ipynb).
 
 Pour le lancer dans le navigateur :
 ```powershell
@@ -119,14 +136,13 @@ jupyter notebook notebooks/main.ipynb
 ```
 *(Ou ouvrez-le directement dans VS Code avec le kernel `optimisation_env` et cliquez sur **Run All**).*
 
-- Le notebook s'exécute de bout en bout en moins de 10 secondes (grâce au mode rapide `FAST = True`).
-- Il affiche le chargement des données, le split, la démonstration interactive du PSO et de l'hybridation, et les courbes de convergence.
+- Le notebook utilise `FAST = True` et un sous-échantillon reproductible pour montrer le chargement des données, le split, PSO, ALS, l'hybridation et les courbes. Ses métriques de démonstration ne remplacent pas le benchmark complet.
 
 ---
 
 ## 4. Présentation des Livrables
 
-1. **Le Notebook :** [notebooks/main.ipynb](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/notebooks/main.ipynb)  
+1. **Le Notebook :** [notebooks/main.ipynb](notebooks/main.ipynb)
    Présente le code interactif, la démonstration de la métaheuristique, le raffinement local et l'affichage des graphiques.
-2. **Le Benchmark :** Le tableau [results/A_summary.md](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/A_summary.md) et le fichier [results/metaheuristics.csv](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/results/metaheuristics.csv) démontrant que les runs ont été exécutés sur 3 graines avec mesures de temps et de mémoire crête.
-3. **Le Fonctionnement Théorique & Résultats :** Détaillés dans [README.md](file:///c:/Users/Asus%20ROG%20STRIX/Desktop/projet_optimisation/README.md) pour servir de base directe à la rédaction du rapport.
+2. **Le Benchmark :** Le tableau [results/benchmark_summary.md](results/benchmark_summary.md) et le fichier [results/metaheuristics.csv](results/metaheuristics.csv) démontrant que les runs ont été exécutés sur 5 graines avec mesures de temps et de mémoire crête.
+3. **Le Fonctionnement Théorique & Résultats :** Détaillés dans [README.md](README.md) pour servir de base directe à la rédaction du rapport.

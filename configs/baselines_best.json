@@ -1,0 +1,32 @@
+{
+  "als": {
+    "d": 10,
+    "lam": 0.05,
+    "n_iter": 20,
+    "variant": "als_cfg_12",
+    "selection_metric": "rmse_val",
+    "selection_score": 0.8606381550635497
+  },
+  "sgd": {
+    "d": 20,
+    "eta": 0.01,
+    "lam": 0.02,
+    "lr_decay": 0.05,
+    "n_epochs": 10,
+    "patience": 3,
+    "variant": "sgd_cfg_26",
+    "selection_metric": "rmse_val",
+    "selection_score": 0.8816803396255262
+  },
+  "bpr": {
+    "d": 20,
+    "eta": 0.05,
+    "lam": 0.001,
+    "lr_decay": 0.02,
+    "n_epochs": 10,
+    "relevant_threshold": 4.0,
+    "variant": "bpr_cfg_25",
+    "selection_metric": "precision@10",
+    "selection_score": 0.0764819881440964
+  }
+}

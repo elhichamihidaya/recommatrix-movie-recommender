@@ -1,0 +1,5 @@
+method_a,method_b,metric,n_paired_seeds,t_statistic,p_value
+als,pso+als,rmse_test,5,-19.047395308268232,4.475796981747661e-05
+als,als_reference_30it,rmse_test,5,5.985048242176869,0.003918197960686485
+bpr,popularity,prec@10,5,118.54688430386652,3.036579670890428e-08
+als,sgd,rmse_test,5,-61.25589810804456,4.253910894256606e-07

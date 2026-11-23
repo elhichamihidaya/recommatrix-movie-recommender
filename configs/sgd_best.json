@@ -1,0 +1,11 @@
+{
+  "d": 20,
+  "eta": 0.01,
+  "lam": 0.02,
+  "lr_decay": 0.05,
+  "n_epochs": 10,
+  "patience": 3,
+  "variant": "sgd_cfg_26",
+  "selection_metric": "rmse_val",
+  "selection_score": 0.8816803396255262
+}

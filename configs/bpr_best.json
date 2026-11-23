@@ -1,0 +1,11 @@
+{
+  "d": 20,
+  "eta": 0.05,
+  "lam": 0.001,
+  "lr_decay": 0.02,
+  "n_epochs": 10,
+  "relevant_threshold": 4.0,
+  "variant": "bpr_cfg_25",
+  "selection_metric": "precision@10",
+  "selection_score": 0.0764819881440964
+}

@@ -23,9 +23,20 @@ class ALSReference(BaseRecommender):
         self.lam = float(lam)
         self.n_iter = int(n_iter)
         self.seed = int(seed)
+        if self.d < 1:
+            raise ValueError("d must be a positive integer.")
+        if self.lam <= 0:
+            raise ValueError("lam must be positive so the ALS systems stay regularized.")
+        if self.n_iter < 0:
+            raise ValueError("n_iter cannot be negative.")
 
     def fit(self, train, val=None, init=None, n_iter: int | None = None) -> "ALSReference":
         max_iter = self.n_iter if n_iter is None else int(n_iter)
+        if max_iter < 0:
+            raise ValueError("n_iter cannot be negative.")
+        if len(train.ratings) == 0:
+            raise ValueError("train must contain at least one rating.")
+
         rng = np.random.default_rng(self.seed)
 
         self.mu = float(np.mean(train.ratings))
@@ -42,9 +53,20 @@ class ALSReference(BaseRecommender):
 
         # Initialization
         if init is not None:
+            if len(init) != 2:
+                raise ValueError("init must be a pair (U0, V0).")
             init_U, init_V = init
             U = np.asarray(init_U, dtype=np.float64).copy()
             V = np.asarray(init_V, dtype=np.float64).copy()
+            expected_u_shape = (n_users, d)
+            expected_v_shape = (n_items, d)
+            if U.shape != expected_u_shape or V.shape != expected_v_shape:
+                raise ValueError(
+                    "init factors have incorrect shapes: expected "
+                    f"U{expected_u_shape} and V{expected_v_shape}, got U{U.shape} and V{V.shape}."
+                )
+            if not np.isfinite(U).all() or not np.isfinite(V).all():
+                raise ValueError("init factors must contain only finite values.")
         else:
             U = rng.normal(0.0, 0.1, size=(n_users, d)).astype(np.float64)
             V = rng.normal(0.0, 0.1, size=(n_items, d)).astype(np.float64)
@@ -117,3 +139,8 @@ class ALSReference(BaseRecommender):
 
         self.n_evals = 0
         return self
+
+
+# Public name used by the Part B implementation. Keep ALSReference as a
+# backwards-compatible name because the existing hybrid code imports it.
+ALS = ALSReference

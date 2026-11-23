@@ -1,6 +1,8 @@
 {
   "d": 10,
   "lam": 0.05,
-  "n_iter": 10,
-  "val_rmse": 0.8630938806456495
+  "n_iter": 20,
+  "variant": "als_cfg_12",
+  "selection_metric": "rmse_val",
+  "selection_score": 0.8606381550635497
 }
